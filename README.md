@@ -8,7 +8,8 @@
 </p>
 
 <p align="center">
-  <b>A G E N T - T O - A G E N T   I N T E L L I G E N C E</b><br>
+  <b>A G E N T - T O - A G E N T 
+  <br>I N T E L L I G E N C E</b><br>
   <i>by MUVIO AI</i>
 </p>
 
@@ -42,12 +43,12 @@ Muvius is a powerful framework for building and managing AI agents with advanced
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
-│                     Muvius Framework                     │
+│                     Muvius Framework                    │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
-│  │  Orchestrator│    │   Agents    │    │   Shared    │  │
-│  │             │    │             │    │  Services    │  │
+│  │ Orchestrator│    │   Agents    │    │   Shared    │  │
+│  │             │    │             │    │ Services    │  │
 │  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘  │
 │         │                  │                  │         │
 │  ┌──────▼──────┐    ┌──────▼──────┐    ┌──────▼──────┐  │
@@ -173,14 +174,6 @@ pytest
 ## License
 
 MIT License
-
-## Roadmap
-
-- [ ] Multi-agent simulation testing
-- [ ] Agent registry service
-- [ ] Enhanced memory systems
-- [ ] Performance optimizations
-- [ ] Additional language support
 
 ## Support
 
