@@ -634,7 +634,7 @@ python -m agents.<agent-name>-agent.main
 
 ### API Endpoints
 - Orchestrator: http://localhost:8001
-- Agent ports are assigned automatically starting from 8000
+- Agent ports are assigned automatically starting from 8001 (first agent gets 8001, second gets 8002, etc.)
 
 ## Contributing
 
@@ -1096,7 +1096,7 @@ def display_success_message():
     
     console.print("\n[bold]Available Services:[/bold]")
     console.print("• Orchestrator: [yellow]http://localhost:8001[/yellow]")
-    console.print("• Agent ports will be assigned automatically starting from 8000")
+    console.print("• Agent ports will be assigned automatically starting from 8001")
 
 def update_agents_readme():
     """Update the agents README with the current list of agents."""
@@ -1128,8 +1128,8 @@ def create_agent(agent_name: str):
     agent_role = agent_name.lower()
     agent_dir = Path(f"agents/{agent_role}-agent")
     
-    # Assign port dynamically based on existing agents
-    base_port = 8000
+    # Assign port dynamically based on existing agents, starting from 8001
+    base_port = 8001
     existing_agents = [d for d in Path("agents").iterdir() if d.is_dir() and d.name.endswith("-agent")]
     port = base_port + len(existing_agents)
     
