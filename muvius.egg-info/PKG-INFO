@@ -1,0 +1,233 @@
+Metadata-Version: 2.4
+Name: muvius
+Version: 0.1.2
+Summary: A framework for building and managing AI agents with memory systems and API endpoints
+Home-page: https://github.com/tnbtinai/muvius-a2a-framework
+Author: MUVIO AI
+Author-email: your.email@example.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: click>=8.1.7
+Requires-Dist: fastapi>=0.104.1
+Requires-Dist: uvicorn>=0.24.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: pydantic>=2.5.2
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pyyaml>=6.0.1
+Requires-Dist: rich>=13.7.0
+Requires-Dist: typer>=0.9.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Muvius Framework
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9f95dfde-f258-4bdd-ac3a-23aad569d9c0" 
+       alt="Muvius Logo" 
+       width="300" 
+       style="padding: 10px; border-radius: 8px;"/>
+</p>
+
+<p align="center">
+  <b>A G E N T - T O - A G E N T   I N T E L L I G E N C E</b><br>
+  <i>by MUVIO AI</i>
+</p>
+
+## What is Muvius?
+
+Muvius is a powerful framework for building and managing AI agents with advanced memory systems and seamless inter-agent communication. It provides a structured approach to creating intelligent agents that can:
+
+- Maintain context through multiple memory systems
+- Communicate with other agents using standardized protocols
+- Handle complex tasks through role-based interactions
+- Scale from simple to complex multi-agent systems
+
+## Key Features
+
+### 1. Memory Systems
+- **Episodic Memory**: Tracks conversation history and interactions
+- **Procedural Memory**: Stores agent roles, rules, and procedures
+- **Vector Store**: Enables semantic search and context understanding
+
+### 2. Agent Communication
+- Standardized message protocols
+- Dynamic message routing
+- Inter-agent collaboration support
+
+### 3. Easy Integration
+- FastAPI-based REST endpoints
+- Docker support for easy deployment
+- CLI tools for quick setup and management
+
+## Architecture
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│                     Muvius Framework                     │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │  Orchestrator│    │   Agents    │    │   Shared    │  │
+│  │             │    │             │    │  Services    │  │
+│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘  │
+│         │                  │                  │         │
+│  ┌──────▼──────┐    ┌──────▼──────┐    ┌──────▼──────┐  │
+│  │  Message    │    │  Memory     │    │  Utilities  │  │
+│  │  Routing    │    │  Systems    │    │  & Tools    │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Quick Start
+
+### 1. Installation
+
+```bash
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+
+# Install Muvius
+pip install muvius
+```
+
+### 2. Initialize Your Project
+
+```bash
+# Create a new Muvius project
+muvius init
+
+# Create your first agent
+muvius create-agent my-agent
+```
+
+### 3. Start Development
+
+```bash
+# Start the orchestrator
+python -m muvius.orchestrator.main
+
+# Start your agent (in a new terminal)
+python -m muvius.agents.my-agent.main
+```
+
+## Project Structure
+
+```
+muvius/
+├── agents/              # Agent modules
+│   └── my-agent/       # Your custom agent
+│       ├── memory/     # Memory systems
+│       ├── main.py     # Agent logic
+│       └── routes.py   # API endpoints
+├── orchestrator/       # Message routing
+└── shared/            # Common utilities
+```
+
+## CLI Commands
+
+```bash
+# Initialize framework
+muvius init
+
+# Create new agent
+muvius create-agent <agent-name>
+
+# Delete agent
+muvius delete-agent <agent-name>
+```
+
+## Memory Systems
+
+### Episodic Memory
+- SQLite-based conversation history
+- Automatic message logging
+- Context retrieval for conversations
+
+### Procedural Memory
+- YAML-based configuration
+- Role and policy definitions
+- Procedure storage and retrieval
+
+### Vector Store
+- Semantic search capabilities
+- Context understanding
+- Long-term memory storage
+
+## API Endpoints
+
+### Orchestrator
+- `POST /process-message`: Route messages to agents
+- `GET /ping`: Health check
+
+### Agents
+- `POST /interact`: Handle agent interactions
+- `GET /ping`: Health check
+
+## Development
+
+### Prerequisites
+- Python 3.8+
+- pip
+- virtualenv
+
+### Environment Setup
+1. Create `.env` file:
+```env
+OPENAI_API_KEY=your_api_key_here
+```
+
+### Running Tests
+```bash
+pytest
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+MIT License
+
+## Roadmap
+
+- [ ] Multi-agent simulation testing
+- [ ] Agent registry service
+- [ ] Enhanced memory systems
+- [ ] Performance optimizations
+- [ ] Additional language support
+
+## Support
+
+For support, please:
+1. Check the documentation
+2. Open an issue on GitHub
+3. Contact the Muvio AI team
+
+---
+
+<p align="center">
+  <i>Built with ❤️ by Muvio AI</i>
+</p>

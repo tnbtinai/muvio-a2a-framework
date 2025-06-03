@@ -1,0 +1,13 @@
+LICENSE
+MANIFEST.in
+README.md
+pyproject.toml
+setup.py
+muvius/__init__.py
+muvius/cli.py
+muvius.egg-info/PKG-INFO
+muvius.egg-info/SOURCES.txt
+muvius.egg-info/dependency_links.txt
+muvius.egg-info/entry_points.txt
+muvius.egg-info/requires.txt
+muvius.egg-info/top_level.txt
