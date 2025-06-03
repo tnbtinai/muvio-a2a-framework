@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="muvius",
-    version="0.1.2",
+    version="0.1.3",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
@@ -15,6 +15,15 @@ setup(
         "pyyaml>=6.0.1",
         "rich>=13.7.0",
         "typer>=0.9.0",
+        "openai>=1.3.0",
+        "numpy>=1.24.0",
+        "pandas>=2.0.0",
+        "scikit-learn>=1.3.0",
+        "python-multipart>=0.0.6",
+        "aiohttp>=3.9.0",
+        "pytest>=7.4.0",
+        "pytest-asyncio>=0.21.0",
+        "httpx>=0.25.0",
     ],
     entry_points={
         "console_scripts": [
@@ -22,7 +31,7 @@ setup(
         ],
     },
     author="MUVIO AI",
-    author_email="your.email@example.com",
+    author_email="info@muvio.ai",
     description="A framework for building and managing AI agents with memory systems and API endpoints",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -35,6 +44,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     python_requires=">=3.8",
 ) 
