@@ -889,11 +889,11 @@ class ProceduralMemory:
     def _init_yaml(self):
         \"\"\"Initialize the YAML file for procedural memory.\"\"\"
         if not self.yaml_path.exists():
-            default_data = {
-                "procedures": {},
-                "rules": {},
-                "preferences": {}
-            }
+            default_data = {{
+                "procedures": {{}},
+                "rules": {{}},
+                "preferences": {{}}
+            }}
             self.save_data(default_data)
     
     def save_data(self, data: Dict[str, Any]):
@@ -1207,9 +1207,10 @@ def create_agent(agent_name: str):
                     formatted_content = content.format(
                         agent_name=agent_name,
                         agent_role=agent_role,
-                        port=port,
-                        message="{message}"
+                        port=port
                     )
+                    # Finally, unescape the preserved curly braces
+                    formatted_content = formatted_content.replace("{{{{", "{{").replace("}}}}", "}}")
                 except (KeyError, IndexError) as e:
                     # If there's still an error, it means we have a complex format string
                     # that needs to be handled differently
