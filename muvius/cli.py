@@ -1242,13 +1242,13 @@ def init(force, skip_install):
         console.print(f"[red]Error during initialization: {str(e)}")
         sys.exit(1)
 
-@cli.command()
+@cli.command(name='create-agent')
 @click.argument('agent_name')
 def create_agent_command(agent_name):
     """Create a new agent with all necessary files and structure."""
     create_agent(agent_name)
 
-@cli.command()
+@cli.command(name='delete-agent')
 @click.argument('agent_name')
 def delete_agent_command(agent_name):
     """Delete an existing agent."""
