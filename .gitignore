@@ -41,3 +41,4 @@ memory/
 
 # Logs
 *.log
+muvius.egg-info/
