@@ -448,13 +448,57 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 """,
 
-    "routes.py": """from fastapi import APIRouter
+    "routes.py": """from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import List, Dict, Any
+from .memory.episodic import EpisodicMemory
+from .memory.procedural import ProceduralMemory
+from .memory.vector_store import VectorStore
 
 router = APIRouter()
 
-@router.get("/health")
-async def health_check():
-    return {{"status": "healthy"}}
+# Initialize memory systems
+episodic_memory = EpisodicMemory("{agent_role}")
+procedural_memory = ProceduralMemory("{agent_role}")
+vector_store = VectorStore("{agent_role}")
+
+class ProcedureInput(BaseModel):
+    name: str
+    steps: List[Dict[str, str]]
+
+@router.post("/procedures")
+async def add_procedure(input_data: ProcedureInput):
+    \"\"\"Add a new procedure.\"\"\"
+    try:
+        procedural_memory.add_procedure(input_data.name, input_data.steps)
+        return {"message": f"Procedure '{input_data.name}' added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/procedures")
+async def get_procedures():
+    \"\"\"Get all procedures.\"\"\"
+    try:
+        return procedural_memory.load_data()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/history/{user_id}")
+async def get_history(user_id: str, limit: int = 10):
+    \"\"\"Get conversation history for a user.\"\"\"
+    try:
+        return episodic_memory.get_conversation_history(user_id, limit)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/history/{user_id}")
+async def clear_history(user_id: str):
+    \"\"\"Clear conversation history for a user.\"\"\"
+    try:
+        episodic_memory.clear_user_history(user_id)
+        return {"message": f"History cleared for user {user_id}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 """,
 
     "requirements.txt": """# Core dependencies
@@ -740,7 +784,7 @@ async def add_procedure(input_data: ProcedureInput):
     \"\"\"Add a new procedure.\"\"\"
     try:
         procedural_memory.add_procedure(input_data.name, input_data.steps)
-        return {{"message": f"Procedure '{input_data.name}' added successfully"}}
+        return {"message": f"Procedure '{input_data.name}' added successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -765,7 +809,7 @@ async def clear_history(user_id: str):
     \"\"\"Clear conversation history for a user.\"\"\"
     try:
         episodic_memory.clear_user_history(user_id)
-        return {{"message": f"History cleared for user {user_id}"}}
+        return {"message": f"History cleared for user {user_id}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 """,
@@ -845,11 +889,11 @@ class ProceduralMemory:
     def _init_yaml(self):
         \"\"\"Initialize the YAML file for procedural memory.\"\"\"
         if not self.yaml_path.exists():
-            default_data = {{
-                "procedures": {{}},
-                "rules": {{}},
-                "preferences": {{}}
-            }}
+            default_data = {
+                "procedures": {},
+                "rules": {},
+                "preferences": {}
+            }
             self.save_data(default_data)
     
     def save_data(self, data: Dict[str, Any]):
