@@ -1,8 +1,8 @@
 # Muvius Framework
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/9f95dfde-f258-4bdd-ac3a-23aad569d9c0" 
-       alt="Muvius Logo" 
+  <img src="https://github.com/user-attachments/assets/5b53c0e6-67c5-431e-a7a4-704b243c9588" 
+       alt="Muvius Framework Logo" 
        width="300" 
        style="padding: 10px; border-radius: 8px;"/>
 </p>
