@@ -4,18 +4,22 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import json
+import time
+from typing import Dict, List, Optional
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import print as rprint
 from rich.text import Text
-from rich.syntax import Syntax
+from rich.table import Table
+from rich.prompt import Confirm
 
 # Initialize Rich console
 console = Console()
 
 # ASCII Art for Muvius
-MUVIUS_BANNER = """
+MUVIUS_BANNER = r"""
 ███╗   ███╗██╗   ██╗██╗   ██╗██╗██╗   ██╗███████╗
 ████╗ ████║██║   ██║██║   ██║██║██║   ██║██╔════╝
 ██╔████╔██║██║   ██║██║   ██║██║██║   ██║███████╗
@@ -29,6 +33,8 @@ A G E N T - T O - A G E N T   I N T E L L I G E N C E
 
 # Framework-level templates (created during muvius init)
 FRAMEWORK_TEMPLATES = {
+    "orchestrator/__init__.py": "",
+    
     "orchestrator/main.py": """from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
@@ -68,7 +74,7 @@ async def health_check():
     return {"status": "healthy"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 """,
 
     "orchestrator/orchestrator.py": """from typing import Dict, Optional
@@ -364,44 +370,8 @@ class AgentInfo(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 """,
 
-    "orchestrator/classifier.py": """from typing import Dict
-from .protocol import AgentMessage
-from shared.llm import call_llm
-
-class MessageClassifier:
-    def __init__(self):
-        self.agent_types = []  # Will be populated dynamically based on available agents
-
-    def classify_message(self, message: str) -> str:
-        \"\"\"Classify a message to determine the appropriate agent.\"\"\"
-        prompt = f\"\"\"Classify this message to determine which agent should handle it:
-Message: {message}
-
-Available agents: {{', '.join(self.agent_types)}}
-
-Respond with only the agent name from the available agents list.\"\"\"
-
-        response = call_llm(
-            prompt=prompt,
-            system_prompt="You are a message classifier. Respond with only the agent name from the available agents list."
-        )
-        return response.strip().lower()
-""",
-
-    "orchestrator/protocol.py": """from pydantic import BaseModel
-from typing import Optional, Dict, Any
-
-class AgentMessage(BaseModel):
-    sender: str
-    recipient: str
-    content: str
-
-class AgentResponse(BaseModel):
-    success: bool
-    data: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-""",
-
+    "shared/__init__.py": "",
+    
     "shared/llm.py": """from typing import Optional
 import os
 import requests
@@ -412,18 +382,20 @@ def call_llm(prompt: str, system_prompt: Optional[str] = None) -> str:
     if not api_key:
         raise ValueError("OPENAI_API_KEY environment variable not set")
         
-    headers = {{
+    headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
-    }}
+    }
     
-    data = {{
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+    
+    data = {
         "model": "gpt-3.5-turbo",
-        "messages": [
-            {{"role": "system", "content": system_prompt}} if system_prompt else None,
-            {{"role": "user", "content": prompt}}
-        ]
-    }}
+        "messages": messages
+    }
     
     response = requests.post(
         "https://api.openai.com/v1/chat/completions",
@@ -435,70 +407,35 @@ def call_llm(prompt: str, system_prompt: Optional[str] = None) -> str:
     return response.json()["choices"][0]["message"]["content"]
 """,
 
-    "main.py": """from fastapi import FastAPI
-import uvicorn
+    "agents/__init__.py": "",
+    
+    "agents/README.md": """# Agents Directory
 
-app = FastAPI(title="Muvius Framework")
+This directory contains all the AI agents created using the Muvius framework.
 
-@app.get("/")
-async def root():
-    return {{"message": "Welcome to Muvius Framework"}}
+## Available Agents
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-""",
+{agent_list}
 
-    "routes.py": """from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List, Dict, Any
-from .memory.episodic import EpisodicMemory
-from .memory.procedural import ProceduralMemory
-from .memory.vector_store import VectorStore
+## Agent Structure
 
-router = APIRouter()
+Each agent has the following structure:
+- `main.py` - Main FastAPI application
+- `routes.py` - API route definitions
+- `memory/` - Memory systems (episodic, procedural, vector store)
+- `README.md` - Agent-specific documentation
 
-# Initialize memory systems
-episodic_memory = EpisodicMemory("{agent_role}")
-procedural_memory = ProceduralMemory("{agent_role}")
-vector_store = VectorStore("{agent_role}")
+## Running Agents
 
-class ProcedureInput(BaseModel):
-    name: str
-    steps: List[Dict[str, str]]
+To run an agent:
+```bash
+python -m agents.<agent-name>-agent.main
+```
 
-@router.post("/procedures")
-async def add_procedure(input_data: ProcedureInput):
-    \"\"\"Add a new procedure.\"\"\"
-    try:
-        procedural_memory.add_procedure(input_data.name, input_data.steps)
-        return {"message": f"Procedure '{input_data.name}' added successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/procedures")
-async def get_procedures():
-    \"\"\"Get all procedures.\"\"\"
-    try:
-        return procedural_memory.load_data()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/history/{user_id}")
-async def get_history(user_id: str, limit: int = 10):
-    \"\"\"Get conversation history for a user.\"\"\"
-    try:
-        return episodic_memory.get_conversation_history(user_id, limit)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/history/{user_id}")
-async def clear_history(user_id: str):
-    \"\"\"Clear conversation history for a user.\"\"\"
-    try:
-        episodic_memory.clear_user_history(user_id)
-        return {"message": f"History cleared for user {user_id}"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+Example:
+```bash
+python -m agents.user-agent.main
+```
 """,
 
     "requirements.txt": """# Core dependencies
@@ -571,7 +508,7 @@ memory/
 OPENAI_API_KEY=your_api_key_here
 
 # Orchestrator
-ORCHESTRATOR_URL=http://localhost:8001
+ORCHESTRATOR_URL=http://localhost:8000
 
 # Database
 DATABASE_URL=sqlite:///memory/episodic.db
@@ -592,7 +529,7 @@ python -m venv venv
 # On macOS/Linux:
 source venv/bin/activate
 # On Windows:
-.\venv\Scripts\activate
+.\\venv\\Scripts\\activate
 ```
 
 2. Install Muvius CLI:
@@ -677,7 +614,7 @@ python -m agents.<agent-name>-agent.main
 ```
 
 ### API Endpoints
-- Orchestrator: http://localhost:8001
+- Orchestrator: http://localhost:8000
 - Agent ports are assigned automatically starting from 8001 (first agent gets 8001, second gets 8002, etc.)
 
 ## Contributing
@@ -696,6 +633,8 @@ MIT License
 
 # Agent-level templates (created during muvius create-agent)
 AGENT_TEMPLATES = {
+    "__init__.py": "",
+    
     "main.py": """from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
@@ -734,11 +673,11 @@ async def interact(input_data: UserInput):
         procedures = procedural_memory.load_data()
         
         # Process the message (implement your agent's logic here)
-        response = {{
+        response = {
             "message": f"Hello! I am the {agent_name} agent. I received your message: {input_data.message}",
             "history": history,
             "procedures": procedures
-        }}
+        }
         
         # Store response in episodic memory
         episodic_memory.log_episode(
@@ -755,10 +694,10 @@ async def interact(input_data: UserInput):
 @app.get("/ping")
 async def ping():
     \"\"\"Health check endpoint.\"\"\"
-    return {{"status": "healthy", "agent": "{agent_name}"}}
+    return {"status": "healthy", "agent": "{agent_name}"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port={port})
+    uvicorn.run(app, host="127.0.0.1", port={port})
 """,
 
     "routes.py": """from fastapi import APIRouter, HTTPException
@@ -814,6 +753,8 @@ async def clear_history(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 """,
 
+    "memory/__init__.py": "",
+    
     "memory/episodic.py": """from typing import List, Dict, Any
 import sqlite3
 from datetime import datetime
@@ -823,6 +764,7 @@ from pathlib import Path
 class EpisodicMemory:
     def __init__(self, agent_role: str):
         self.agent_role = agent_role
+        # Use the current directory as base for memory files
         self.memory_dir = Path("memory")
         self.memory_dir.mkdir(exist_ok=True)
         self.db_path = self.memory_dir / f"{agent_role}_episodic.db"
@@ -853,6 +795,7 @@ class EpisodicMemory:
     def get_last_episodes(self, user_id: str, limit: int = 5) -> List[Dict[str, Any]]:
         \"\"\"Get the last N episodes for a user.\"\"\"
         with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
             cursor = conn.execute(
                 "SELECT * FROM episodes WHERE user_id = ? ORDER BY timestamp DESC LIMIT ?",
                 (user_id, limit)
@@ -862,6 +805,7 @@ class EpisodicMemory:
     def get_conversation_history(self, user_id: str) -> List[Dict[str, Any]]:
         \"\"\"Get the complete conversation history for a user.\"\"\"
         with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
             cursor = conn.execute(
                 "SELECT * FROM episodes WHERE user_id = ? ORDER BY timestamp ASC",
                 (user_id,)
@@ -881,6 +825,7 @@ from pathlib import Path
 class ProceduralMemory:
     def __init__(self, agent_role: str):
         self.agent_role = agent_role
+        # Use the current directory as base for memory files
         self.memory_dir = Path("memory")
         self.memory_dir.mkdir(exist_ok=True)
         self.yaml_path = self.memory_dir / f"{agent_role}_procedural.yaml"
@@ -889,11 +834,11 @@ class ProceduralMemory:
     def _init_yaml(self):
         \"\"\"Initialize the YAML file for procedural memory.\"\"\"
         if not self.yaml_path.exists():
-            default_data = {{
-                "procedures": {{}},
-                "rules": {{}},
-                "preferences": {{}}
-            }}
+            default_data = {
+                "procedures": {},
+                "rules": {},
+                "preferences": {}
+            }
             self.save_data(default_data)
     
     def save_data(self, data: Dict[str, Any]):
@@ -929,22 +874,6 @@ class ProceduralMemory:
         return data["rules"].get(name, "")
 """,
 
-    "memory/procedural.yaml": """# Procedural memory for {agent_role}
-procedures:
-  # Add your procedures here
-  example_procedure:
-    - step1: "First step description"
-    - step2: "Second step description"
-
-rules:
-  # Add your rules here
-  example_rule: "Rule description"
-
-preferences:
-  # Add your preferences here
-  example_preference: "Preference value"
-""",
-
     "memory/vector_store.py": """from typing import List, Dict, Any
 import numpy as np
 from pathlib import Path
@@ -953,6 +882,7 @@ import json
 class VectorStore:
     def __init__(self, agent_role: str):
         self.agent_role = agent_role
+        # Use the current directory as base for memory files
         self.memory_dir = Path("memory")
         self.memory_dir.mkdir(exist_ok=True)
         self.store_path = self.memory_dir / f"{agent_role}_vectors.json"
@@ -961,7 +891,7 @@ class VectorStore:
     def _init_store(self):
         \"\"\"Initialize the vector store.\"\"\"
         if not self.store_path.exists():
-            self.save_vectors({{}})
+            self.save_vectors({})
     
     def save_vectors(self, vectors: Dict[str, List[float]]):
         \"\"\"Save vectors to the store.\"\"\"
@@ -990,7 +920,7 @@ class VectorStore:
         if not vectors:
             return []
         
-        similarities = {{}}
+        similarities = {}
         query_norm = np.linalg.norm(query_vector)
         
         for key, vector in vectors.items():
@@ -1167,6 +1097,13 @@ def update_agents_readme():
             with open(readme_path, "w") as f:
                 f.write(content)
 
+def safe_format_template(content: str, replacements: dict) -> str:
+    """Safely replace template placeholders without using .format()"""
+    result = content
+    for key, value in replacements.items():
+        result = result.replace(f"{{{key}}}", str(value))
+    return result
+
 def create_agent(agent_name: str):
     """Create a new agent with all necessary files and structure."""
     agent_role = agent_name.lower()
@@ -1186,7 +1123,7 @@ def create_agent(agent_name: str):
         task = progress.add_task(f"Creating {agent_name} agent...", total=None)
         agent_dir.mkdir(parents=True, exist_ok=True)
         
-        # Create memory directory
+        # Create memory directory inside agent directory
         memory_dir = agent_dir / "memory"
         memory_dir.mkdir(exist_ok=True)
         
@@ -1200,22 +1137,11 @@ def create_agent(agent_name: str):
                 # Skip formatting the agents README as it's handled separately
                 formatted_content = content
             else:
-                try:
-                    # First, escape any literal curly braces that should be preserved
-                    content = content.replace("{{", "{{{{").replace("}}", "}}}}")
-                    # Then format with our parameters
-                    formatted_content = content.format(
-                        agent_name=agent_name,
-                        agent_role=agent_role,
-                        port=port
-                    )
-                    # Finally, unescape the preserved curly braces
-                    formatted_content = formatted_content.replace("{{{{", "{{").replace("}}}}", "}}")
-                except (KeyError, IndexError) as e:
-                    # If there's still an error, it means we have a complex format string
-                    # that needs to be handled differently
-                    console.print(f"[yellow]Warning: Complex format string in {template_path}, using raw content[/yellow]")
-                    formatted_content = content
+                formatted_content = safe_format_template(content, {
+                    "agent_name": agent_name,
+                    "agent_role": agent_role,
+                    "port": port
+                })
             
             with open(full_path, "w") as f:
                 f.write(formatted_content)
