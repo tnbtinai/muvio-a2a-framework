@@ -185,5 +185,5 @@ For support, please:
 ---
 
 <p align="center">
-  <i>Built with ❤️ by Muvio AI</i>
+  <i>Built with ❤️ by <a href="https://github.com/varun-singhh">@varun-singhh</a></i>
 </p>
